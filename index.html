@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Huzur Alanı</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400&display=swap" rel="stylesheet">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  background: radial-gradient(circle at top, #294a53, #0f2b33);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* 🌊 ARKA PLAN ŞEKİLLER */
+.bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.shape {
+  position: absolute;
+  opacity: 0.08;
+  filter: blur(2px);
+}
+
+.circle {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: #ffffff;
+  top: 10%;
+  left: 15%;
+}
+
+.square {
+  width: 120px;
+  height: 120px;
+  border-radius: 30px;
+  background: #ffffff;
+  bottom: 15%;
+  right: 18%;
+}
+
+.star {
+  width: 200px;
+  height: 200px;
+  background: #ffffff;
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+  top: 55%;
+  left: 5%;
+}
+
+/* ⏰ Saat */
+.clock {
+  position: absolute;
+  top: 20px;
+  padding: 8px 20px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(8px);
+  font-size: 1.1rem;
+  z-index: 2;
+}
+
+/* ANA PANEL */
+.wrapper {
+  width: 92%;
+  max-width: 420px;
+  display: flex;
+  gap: 10px;
+  z-index: 1;
+}
+
+/* PANELLER */
+.panel {
+  flex: 1;
+  background: rgba(255,255,255,0.12);
+  border-radius: 22px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(10px);
+}
+
+/* ORTA */
+.center-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  text-align: center;
+  min-height: 120px;
+}
+
+/* SAĞ */
+.result {
+  font-size: 0.9rem;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* BUTON */
+button {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: none;
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+</style>
+</head>
+
+<body>
+
+<!-- 🎵 ARKA PLAN MÜZİĞİ -->
+<audio id="bgMusic" loop>
+  <source src="arkaplan.mp3" type="audio/mpeg">
+</audio>
+
+<div class="bg">
+  <div class="shape circle"></div>
+  <div class="shape square"></div>
+  <div class="shape star"></div>
+</div>
+
+<div class="clock" id="clock">--:--</div>
+
+<div class="wrapper">
+
+  <!-- SOL -->
+  <div class="panel">
+    <div>🎵 Günün şarkısı<br>için bas</div>
+    <button>Şarkı (yakında)</button>
+  </div>
+
+  <!-- ORTA -->
+  <div class="panel">
+    <div class="center-text" id="soz"></div>
+    <button onclick="yeniSoz()">Yeni Söz</button>
+  </div>
+
+  <!-- SAĞ -->
+  <div class="panel">
+    <div>Evet / Hayır<br>için bas</div>
+    <div class="result" id="cevap"></div>
+    <button onclick="evetHayir()">Bas</button>
+  </div>
+
+</div>
+
+<script>
+/* Saat */
+function saat() {
+  document.getElementById("clock").innerText =
+    new Date().toLocaleTimeString("tr-TR", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+}
+setInterval(saat, 1000);
+saat();
+
+/* Sözler */
+const sozler = [
+  "Zaman asalettir; kadere asla olmaz.",
+"Bir insanın en büyük başarısı, tembelliğine karşı koymasıdır.",
+"Kafamla yaşam arasında bir yerdeyim.",
+"“Lan, ne ara bu yaşa geldik?” düşüncesi.",
+"Sen başkasın, ben başka.",
+"Uzak ya da yakın, ne fark eder?",
+"Önemli olan başınıza ne geldiği değildir; asıl önemli olan, ona nasıl tepki verdiğinizdir.",
+"Ruhun var ruhumda.",
+"Bence bazen herkes biraz kaybolmuş hisseder.",
+"Koca yılın anısını bir anda nasıl sileyim? Yine yakama yapışır mı mesafeler? Canımı kimseler acıtamazdı senden fazla.",
+"Bu hayatın gerçeklerini anlayınca eski bene veda ettim.",
+"Ben gecenin dördü, beşiyim.",
+"Sen benim diğer yarımsın.",
+"Mesela yani.",
+"Hayat şartları, küfürsüz yaşamak için elverişli değil.",
+"Camı kırılan herkese koştun; evin yandı, kimsen yoktu.",
+"Çok düşünmek hayatımı mahvetti ama hiç yanılmadım.",
+"Hayatım boyunca insanların samimiyetinden şüphe duyacağım.",
+"Kendimi ben bile tanıyamıyorum.",
+"Eğer depresif hissediyorsan geçmişte yaşıyorsun demektir. Eğer kaygılı hissediyorsan gelecekte yaşıyorsun demektir. Eğer huzurlu hissediyorsan bugünde yaşıyorsun demektir.",
+"Fazla hoşgörülüsün; unutma, her zaman ilk vazgeçilen, ilk gözden çıkarılan sen olacaksın.",
+"Oyunu anladığında paniğe kapılmazsın.",
+"Yaşım sorgusuz.",
+"Allah sana heyecan, bana da huzur versin.",
+"Bazı şeyleri zorlamamak lazım.",
+"Özür dilemek, gönül almak çok mu zordu? Hiç tanımadığın insanlara gösterdiğin nezaketi neden benden esirgedin?",
+"Çünkü çok düşünüyorum.",
+"Konuşmanın en yüksek ve en sesli hâli, insanın kendi kendisiyle konuşmasıdır.",
+"Dağınık kafa + soğuk hava + Ahiyan.",
+"Yorulan ruhunsa uyku bile dinlendirmez.",
+"Sinirliyken söylenen her kelime, sakinken düşünülmüştür.",
+"Bütün duyguları anlatmaya yetecek kadar kelime yoktur; gerek de yoktur.",
+"Hayat kısa. Aptallık yap. Utan. Çok âşık ol. Kalp kırıklıklarını atlat. Ama sakın anılar yaratmayı unutma. İyi ya da kötü; bunlar seni sen yapan şeylerdir.",
+"Madem ki bir gün çekip gideceğiz, o hâlde bunca matem, bunca kahır ne için?",
+"Seni son gördüğümde, ilk gördüğümden daha yabancıydın.",
+"Hayallerin için çalışmayı ne kadar ertelersen, çalıştığın şeylerden keyif almak için o kadar az zamanın olur.",
+"Bulunduğun anı bir daha yaşamayacağının bilincinde olursan, hayat sana daha anlamlı gelir.",
+"Her yerden gitmek istiyorum.",
+"Sabah beşte uyumazsınız ama çok rüya görürsünüz.",
+"Dünya seni üzsün diye değil, dünyayı görmek için yaşamalısın.",
+"Yanlış tarafa girdiğini vardığında anlayacaksın.",
+"Çok gülen, çok gizler.",
+"Vefatından sonra insanların seni ne kadar çabuk unutacağını bilseydin, bütün hayatını başkalarını memnun etmek için yaşamazdın.",
+"İnsanlarla tanışmanızın her zaman bir nedeni vardır: ya onlar hayatınızı değiştirir ya da onların hayatını değiştirecek kişi siz olursunuz.",
+"Neden bir canavar olduğum için özür dileyeyim ki? Hiç canavar yarattığınız için özür dilediniz mi?",
+"Madem ölmemiz gerekiyor, o hâlde yaşayalım.",
+"Erkeğin düşmeye hakkı yoktur.",
+"Aradığınız kişi şu anda başka biriyle görüşüyor, lütfen hattan ayrılınız.",
+"Kendine söz ver.",
+"Sonra.",
+"Sakinleştim, tuz bastım yarama.",
+"Yaşama sevincimi sigortalı bir iş karşılığında sattım.",
+"Kader ağlarını örmeyecek bizim için.",
+"İnce düşünen incinir.",
+"Hayat budur sevgilim; geçenler unutulur.",
+"Bazen olabileceğiniz en kötü yer, kafanızın içidir.",
+"Lebensmüde.",
+"İnsanlar depresyonu hüzün, ağlamak ya da siyah giyinmek sanırlar; fakat yanılırlar. Depresyon bir uyuşukluk hâlidir. Sabah tekrar yatmak için uyanmaktır.",
+"Çok değerlisin.",
+"Onlara hiç ilerlemiyormuşuz gibi gelir; onların yönünde ilerlemediğimiz zaman.",
+"Rastgele çekilen fotoğraflar daha güzel çıkar.",
+"Gülüşünün kıyısında bir yerlerdeyim.",
+"Körün gözü açıldığında ilk kırdığı şey bastonudur.",
+"Geride bıraktıklarına odaklanırsan geleceği göremezsin.",
+"Aynı şey sana yapılıncaya kadar birine ne kadar zarar verdiğini anlayamazsın.",
+"Keşke o gece uyusaydık.",
+"Kameraya gülümseyin; en güzel açınızdan. Kime ne acınızdan?",
+"Bazı insanlarla iki kez tanışırsınız; hatta kendinizle bile.",
+"Çekil kabuğuna, inci ol; varsın derinden seni nefesi yeten çıkarsın.",
+"Her erkek evlat, içinde babasını taşır.",
+"Artık markete gittiğimde abur cubur almıyorum; canım çekmiyor.",
+"İstediğin hayatın senden uzaklaştığını hissetmek.",
+"Etrafınızdaki beş kişinin ortalamasısınız.",
+"Hayat sana gelmiyor; sen ona gideceksin.",
+"Ne çok yol, ne az varış.",
+"Kendini sev.",
+"Bir şeyi iki saniyede kırabilirsin ama onu düzeltmek sonsuza kadar sürebilir.",
+"Ruminasyon.",
+"Ağlamak, gözlerin konuşma şeklidir.",
+"Yanlış yerdeysen değersiz değilsin.",
+"Hayalleriniz başkalarına anlamsız gelir.",
+"Başkalarının varış noktası, senin başlangıç noktan olabilir.",
+"Yolunda gitmiyorsa, yoldan gitmesin sen de.",
+"Aslında bayağı sesliyim; sadece kimin dinlediğine bağlı.",
+"Bazen kim olduğunu bulmak için kaybolmamız gerekebilir.",
+"O gülüşe yine olsa yine yenilirdim.",
+"Yaşanması mümkün ama yaşanamayan hâller.",
+"Kutlamadığı doğum gününün tek dileğiydi hâlbuki.",
+"Kaçmak istiyordu ama tüm evrende saklanabileceği tek bir evren bile yoktu.",
+"Mümkünsüz mertebesine çalışmak.",
+"Yavaş yavaş, uzun zaman önce olmam gereken kişi oluyorum.",
+"Müzik bizi düşmekten alıkoysun.",
+"Tahammülsüzleştim.",
+"Kaybettiklerim arasında en çok kendimi arıyorum.",
+"Her şeyin farkında olmak gibi bir ağırlıkla sınanıyorum.",
+"Rüyamda gördüğüm gecenin sabahı.",
+"Demli bir çay doldurdu, bir sigara yaktı. “Artık hiçbir şeyi hâlletmeye çalışmıyorum,” dedi. Sessizce koltuğa oturdu. Değişmişti.",
+"Pistantrofobi.",
+"Hatırlatma: Bu his kalıcı değil.",
+"Gerçeklere gidiyoruz, İkkan.",
+"Bu dünya bomboş; değmez.",
+"Bazı yaralar, ruh iyileşince geçer.",
+"Öyle bir bağırmak istiyorum ki kimsenin olmadığı yerde; ama yapamıyorum.",
+"Amitriptilin içince kafamın içinde eko oluyor.",
+"Eğer pencere sana zarar veriyorsa kapatmalısın.",
+"Bir ağaç, yaslandığı yöne düşer.",
+"Her şeyi düzeltmeye kalkışmanın yok ettiği şeyler vardır.",
+"Susarak geçmiyor bazı şeyler; anlatsam da anlamazlar.",
+"Viraag",
+"Gülüşünde bir şeyler saklı.",
+"İnsan yüreği denize benzer; içinde dalgalar ve fırtınalar barındırır, diplerinde inciler vardır.",
+"Her güzel şeyin bir sonu vardır.",
+"Gitmekle gidilmiyor ki; gitmekle gitmiş olamazsın. Gönlün kalır, aklın kalır, anıların kalır.",
+"Gören olmaz.",
+"“Ada, ben ayrılmak istiyorum.”",
+"Dışarıdan nasıl görünüyorum bilmiyorum ama içeride işler hiç iyi değil.",
+"Bu dünyanın pembeliğine mi kandın?",
+"Bazı pişmanlıklar sana sabah beşte sigara yaktıracak.",
+"İnsan, kalkıp gidemediği yere dalıp gidermiş.",
+"Bende bir resmin var; yüzüme bakmıyor.",
+"Saat seninleykeni zaman dusun geçiyor.",
+"Gömüldüğünü düşünürsün; aslında ekilmişsindir.",
+"Kötü bir resim asarım diye hiç asmadım; kötü yaşarım diye hiç yaşamadım.",
+"Her şey için çok uğraşıyoruz.",
+"Bu hayatta en çok kendime üzüldüm.",
+"Dinlemiyor insanlar bence; anlatamadım.",
+"Kaybetmek istemeyince kaybolursun.",
+"İnsan insana iyi gelmeli; gelmeyecekse hiç gelmemeli.",
+"Etrafıma kendi elimle bir duvar ördüm.",
+"Söz vermiştin.",
+"Önce hayaller ölür, sonra onlara yüklediğimiz anlamlar.",
+"Ezberimde yüzün; silmek öyle kolay mı?",
+"Kalplerin kemikleri olmaz.",
+"Ben bu hayatta en çok kendimi üzdüm.",
+"İnsanın kendisiyle aynı fikirde olmaması ne fena.",
+"Şu anki seçimlerimiz, aslında bir yıl sonraki senin yansımasıdır; gölgesidir.",
+"Etrafa gülücükler saçan, intihar kokulu kadınlar.",
+"Hayaller ve hayatlar aralarında asaldır.",
+"Hayal kurmak bedava falan değil; yıkılınca bedelini ödersin.",
+"Bazen olmaz.",
+"Zaman, olduğundan daha geç.",
+"Çocuk tarafını koruyanlar, sağlıklı yetişkinlerdir.",
+"Hayattan keyif alabilmem için seni her gün görmem gerekiyor.",
+"Yirmi beş yaşındaydı ama yakında kırka basacaktı.",
+"Biz, bizi bizden fayda var.",
+"Ve geçen zaman hiçbir zaman geri dönmez.",
+"Hayat çok kısa; kimin ne dediği önemli değil. Riskli mesaj at, o hikâyeyi paylaş, âşık ol, hatalar yap.",
+"Gri, kirlenmiş bir beyaz mıydı yoksa iyileşmeye çalışan bir siyah mı?",
+"Her şey için çok uğraşıyoruz ya.",
+"Ben seni sevmeyi biraz fazla kaçırıyorum.",
+"Sandın ki susunca her şey düzelir.",
+"Nasip etmeyeceği şeyi hayal ettirmezmiş.",
+"Benim bir de ruhum olduğunu öğrettin.",
+"Acıdan daha korkunç bir şey varsa, o da hissedememektir.",
+"Hevesini kaybetmek.",
+"Sanmakla sınanır insan; zannıyla yanılır, inandığıyla yıkılır.",
+"Her yol seni bir yere götürmez; bazı yollar seni kendine götürür.",
+"Doğru gözlerde sanat olursun.",
+"Hayalini kurduğumuz yaşlardayız.",
+"Öğrendim ki iki insan aynı şeye bakıp tamamen farklı şeyler görebilir.",
+"Problemleri problem etmediğin sürece problem yoktur.",
+"Neyse.",
+"Olabileceği kadar olamayanların hayal kırıklıkları gülüşlerinde saklıdır.",
+"Gülmek zorunda kalıyordu; ağlamak istediği hâlde.",
+"Doğru insan için yapman gereken tek şey var olmak.",
+"İnsanları oldukları yerde bırak.",
+"Durumları oldukları gibi kabul etmek.",
+"Her olaya tepki vermemek.",
+"Görmeyi öğrendiğinde dünya sergiye dönüşür.",
+"Gözümün daldığı yerdesin.",
+"Anıların, şu anki huzurundan daha önemli.",
+"İyi taşıyor olman, hafif olduğu anlamına gelmez.",
+"Yaşamak üzerine çok düşünüyorsun; biraz yaşa.",
+"Kendi ışığını bul.",
+"Üstünü çizmen gereken şeylerde kalemle inatlaşma.",
+"Herkes için her şey olamazsın.",
+"Önemlidir farklılıklar.",
+"Sadece benim çabamla olacak hiçbir şeyi istemiyorum.",
+"Seni her gün ziyaret edecek fikirler.",
+"Nefes alıyorsan hâlâ umut var demektir.",
+"Halledeceğiz.",
+"Yargıladığın her şeyi yaşayabilirsin; yargıladığın herkese dönüşebilirsin. Kimsenin hikâyesine gülme; yol uzun, daha seninki bitmedi.",
+"Kötü bir son, sonsuz bir mutsuzluktan daha iyidir.",
+"Yüklenme kendine; sen de ilk defa yaşıyorsun.",
+"Rota yeniden yükleniyor.",
+"Sonsuz bir akşamüstü.",
+"Biraz fazla fedakârlık yaptığın her insandan nankörlüğün her zerresini görürsün.",
+"İnsanı zeki yapan bildikleri değildir; öğrenmeye devam edebilmesidir.",
+"Söylemesi çok kolay ama sindirmesi çok zor sözleri düşünmek.",
+"Saatin varlığını unutturan insanları sevin.",
+"İnsanlar, onlar için ne yaptığınızı anlamazlar; ta ki siz yapmayı bırakana kadar.",
+"Zorla ikna ettiğin her karar, sonunda pişmanlık getirir.",
+"Kafamdaki kitaplığı toplamalıyım.",
+"Hayal ettiğin gelecek senden kusursuz bir geçmiş istemiyor; sadece karar vermeni, kendine inanmanı ve denemeni bekliyor.",
+"İntikam gerek yok; iğrenerek baktıklarıma benzemişsin.",
+"Vardır bir hayır.",
+"Eğer bu kadar sevgi doluysan, birazını neden kendine vermiyorsun?",
+"Fazla ciddiye almayın bu hayatı; her şey fotoğraflarda kalacak.",
+"Üzüntü, bizi üzdüğüne pişman olana kadar üzer.",
+"İnsan insandan vazgeçmez; insan, insana yüklediği manadan vazgeçer.",
+"Bu dünya bomboş; hiçbir şeye üzülmeye değmez.",
+"Yeniden doğman için tamamen yanman gerekir.",
+"Sen kötü bir şey olmaması için iyi şeylerden bile kaçıyorsun.",
+"Neyin olursan ol, hayal kırıklığım olma; orası çok kalabalık.",
+"Bazen seni yıkan şeyler, tekrar ederken inşa eder.",
+"Saniyeler sonra ne olacağını bilmeden yıllar sonrasının hayalini kurarız.",
+"Kalbini sakinleştir; burası sadece dünya.",
+"Bu şarkı, yeşeren tüm umutlara.",
+"Unutma ki tehlikeli yerlerde en tehlikeli insanlar, en nazik ve kibar olanlardır.",
+"Kendini bir felaketin içinde kaybetmenin manası yoktur.","Bazı sessizlikler bir çığlıktan daha ağırdır.",
+"Bir yere ait olmadığınızın en büyük kanıtı, oraya ait olma çabanızdır.",
+"Yüksek sesten nefret ederim ama kulaklığımda çalan müzik hep son sestir.",
+"İstersen mavinin en güzel tonu ol; bir renk körü için griden başka bir şey değilsin.",
+"Bir arayı sevdiysen, bir iz değil hatıra olmasına izin vermelisin.",
+"Seven elbet sevilir; nefret, işte nefret kadar.",
+"Parfüm şişesinin kırılması kokuyu çok yoğun almanı sağlar ama son kez.",
+"Doğru insan mükemmel biri değildir; eksiklerimize dokunan, onları iyileştiren biridir.",
+"Evren planını mahvetti; yoksa plan seni mahvedecekti.",
+"Oldukları gibi kabul et ama oldukları yerde kalsınlar.",
+"Bir çiçekle bahar olmaz ama bahar bir çiçekle başlar.",
+"Bir ara her şey gönlümce oldu gibi ama sonra geçti.",
+"Ey ruhum, derdini dökmektense gülümsemeyi yeğliyorsun.",
+"Ve bir kez olsun, sadece kendin için yaşa; bencilce olduğunu düşünsen bile.",
+"Hayırlısı.",
+"Hepimiz aslında seçici günahkârlarız.",
+"Bu iki şeyi unutma: İşini, aileni ve gerçek dostlarını çok sev; ne halt ederlerse etsinler affet.",
+"Sözlerin yalandı; peki gözlerin?",
+"Geride bıraktığın artık sana ait değildir.",
+"Bu acının geçmesini istemiyorsun; çünkü bu acı sana ondan kalan tek şey.",
+"Sinirliyken söylenen her söz, sakinken düşünülmüştür.",
+"İnsan kaderiyle, kaderinden kaçmak için saptığı yolda karşılaşır.",
+"Kendine sarılmayı öğren.",
+"Sonunu boş ver; başı güzeldi.",
+"Aslında ortada çok şey var.",
+"Geleceğe o kadar odaklanmışsın ki fark etmiyorsun; bugün, yıllar önce dua ettiğin şeydi. Günün tadını çıkar.",
+"Mutluluk, mutsuz olduğun gün alışılabilecek bir şeydir.",
+
+"Gece, uyumamı sağlayan düşüncelerimle baş başa kalmışımdır.",
+
+"Konuşmak gürültüden başka bir şey değildir.",
+
+"Şayet yazıldıysa, kaçmadan da yetişirsin yazgına.",
+
+"Yol, planladığın yere gitmez; yazıldığı yere gider.",
+
+"Soruyor “iyi misin?” Ayıpsın, fevkaladeyim.",
+
+"Her şeyden soğudum, teşekkürler.",
+
+"Sarsılır ama batmaz.",
+
+"Bir kere sınırı aşan için artık sınır yoktur.",
+
+"Mental olarak müsait değilim.",
+
+"Ben yine de yaparım.",
+
+"Hayırsız evlat.",
+
+"Uyanmak.",
+
+"Pencereyi açan benken, ortalığı dağıtan rüzgârı nasıl suçlayabilirim ki?",
+
+"Bazı şeyler kendiliğinden yoluna girer.",
+
+"Her anda sizin ruhunuzu götürecek biri bulunur.",
+
+"Kendine, kaybetmekten korktuğun biri gibi davran.",
+
+"Peki ya bir gün aradığımı bulursam? Arayışım sonlanır mı, yoksa bulduğuma mı inanmam? Belki de beni hayata tutan tek şey bu bitmek bilmeyen merakımdır. Ya cevapları bulmak her şeyi mahvederse?",
+
+"Biz sırtımızı kendimize dayadık; arkamızda ben varım.",
+
+"Çaba kuldan, hüküm Allah’tan.",
+
+"Bazen yönünü değiştirmek, kendini bulmanın ilk adımıdır.",
+
+"Ki hâlim yok.",
+
+"Anlamsızlığa katlanamayanlar.",
+
+"Olduğu kadar, olmadığı kader.",
+
+"Yorgun ve bitkin.",
+
+"Siktir et.",
+
+"Değişme.",
+
+"Savaştım, kaybettim, değiştim.",
+
+"Fazla mütevazılık cahilden nasihat dinletir.",
+
+"Gülümsetecek anılar biriktir.",
+
+"Hayal kırıklıkları, abartılmış beklentilerden meydana gelir.",
+
+"Yaşanan her şeyin bir sebebi var.",
+
+"Maskeli depresyon.",
+
+"Yokluğunda anlaşılan insanlar.",
+
+"Hissetmek lazım.",
+
+"Belki gittiğin yerde seni beklemiyorlar.",
+
+"Zaman her şeyin ilacıdır.",
+
+"Osmanlı’nın Viyana’yı alma şansı varken beklemeyi tercih etmesi, Viyana’yı sonsuza kadar kaybetmesine neden oldu.",
+
+"Ölüm haricinde her yenilgi psikolojiktir.",
+
+"INFJ.",
+
+"İlerlemeye devam et.",
+
+"Bir bebeğe yürüyemiyor diye kızma; eski hatalarından dolayı kendine de kızma.",
+
+"Uzun uzun sarılmalar.",
+
+"Seni mutlu eden biri (yle) ol.",
+
+"Anı yaşamak.",
+
+"Bu anın bir daha gelmeyeceğini bilirsen, hayat sana daha anlamlı gelir.",
+
+"Bir acıya en fazla gülebilirsin.",
+
+"Sana baktığımda gözlerimin hakkını veriyormuşum gibi hissediyorum.",
+
+"Tek başına yap.",
+
+"Muaşaka.",
+
+"İnsanı yıpratan zannedişler.",
+
+"Üç tane yedi.",
+"Bana sadece tek bir şey mi olmuş kankasının gülü ?",
+"çok uzun süredir aynı günü yaşıyorum... sadece kıyafetlerim ddeğişiyor.",
+"yeniden başlıyoruz, bu sefer hiç kimseyle",
+"Bazen hayatının en zor günleri en şık olman gereken günlerdir",
+"Zira meşakkat, rahmetin esşiğidir",
+"Değiştikçe güçlen", 
+"Bir yere aitmiş gibi davranmak",
+"Ve bazı gecelerde bir müzik açarsın sen müziği değil Müzik seni dinler..",
+"Söz kifayesiz kalacaksa, susmalı insan.",
+"perdeleri güneş, insanı hasret yıpratır.",  
+"İnsan istemediği her şeyin bahanesini, istediği her şeyin çaresini bulur.",  
+"fazla fedakarlık nankörlük getirir.",
+"Demiştim işte gelcem er veya geç...",
+"Yaşarken anlaşılmaya mecburuz.",
+"Hayat kaliteni arttıracak şeyler yap.",
+"Mumun ışığını görebilmek için, onu karanlık bir yere götürmek gerekir.",
+"Yakıldı romanlar.",
+"Nasılsın samimiyetsizliği ile İyiyim sahtekarlığı arasında bir yerdeyim.",
+"Seçeneklerini bilmediğin insanın seçimlerini yargılama.",
+"En tehlikeli hal sesizleşitiğin halindir.",
+"Herkes iyi olsun diye perişan etmişti kendini.",
+"Bir hata birden fazla kez tekrarlanıyorsa, artık bir karardır.",
+"Gözlerimi dolu görmedin diye göğüsüm ağrımaz mı sandın?",
+"Okyanus cayır cayır yanıyor, hissediyor musun balık?",
+"Bazen sadece geçmişe gitmek istersin.",
+"Hiç kimse gördündüğü kadar iyi, anlatıldığı kadar kötü değildir.",
+"Herkes kendi içinde farklı dünyalarda.",
+"Akıl vermek hep kolaydır...",
+"İçine atmak diye bir şey varken anlatmaya ne gerek var ?",
+"Yemek yerken dilini ısırmak deneyim sizliğinden midir?",
+"Düşünen insan gündüzleri özgür geceleri mahkumdur",
+"Sen bir balığın ezberinde kalırsın.",
+"Bambaşka biri olmak.",
+"Hiç bir şey dışardan gördündüğü gibi değildir.",
+"Fazla kelam, ömre ziyan..",
+"Üzülme",  
+"Hiç bir zaman kendini hazır hissetmeyeceksin. Çünkü hazır olmak bir his değil, bir karardır."
+];
+function yeniSoz() {
+  const r = Math.floor(Math.random() * sozler.length);
+  document.getElementById("soz").innerText = sozler[r];
+}
+yeniSoz();
+
+/* Evet Hayır */
+const dereceler = [
+  "1 — Kesinlikle Hayır",
+  "2 — Hayır",
+  "3 — Nötr",
+  "4 — Evet",
+  "5 — Kesinlikle Evet"
+];
+
+function evetHayir() {
+  const r = Math.floor(Math.random() * dereceler.length);
+  document.getElementById("cevap").innerText = dereceler[r];
+}
+
+/* 🎵 İlk tıklamada müziği başlat */
+document.addEventListener("click", () => {
+  const music = document.getElementById("bgMusic");
+  if (music.paused) {
+    music.volume = 0.25; // çok hafif
+    music.play();
+  }
+}, { once: true });
+</script>
+
+</body>
+</html>
+
+
